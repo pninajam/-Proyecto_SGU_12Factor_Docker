@@ -1,0 +1,8 @@
+# Excluir secretos y archivos locales del control de versiones.
+.env
+.env.*
+!.env.example
+node_modules/
+coverage/
+*.log
+.DS_Store

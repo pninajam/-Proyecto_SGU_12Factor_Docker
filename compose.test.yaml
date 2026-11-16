@@ -1,0 +1,32 @@
+# Entorno de integración aislado: NO usa el volumen ni la base de demostración.
+services:
+  dbtest:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: sgu_test
+      POSTGRES_USER: sgu_test
+      POSTGRES_PASSWORD: isolated_test_only
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sgu_test -d sgu_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  tests:
+    build:
+      context: .
+      target: build
+    environment:
+      APP_ENV: test
+      DB_HOST: dbtest
+      DB_PORT: 5432
+      DB_DATABASE: sgu_test
+      DB_USERNAME: sgu_test
+      DB_PASSWORD: isolated_test_only
+    volumes:
+      - ./integration:/app/integration:ro
+    depends_on:
+      dbtest:
+        condition: service_healthy
+    command: ["sh", "-c", "npm run migrate && npm run test:integration"]

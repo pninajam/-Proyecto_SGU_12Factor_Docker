@@ -1,0 +1,20 @@
+{
+  "name": "sgu-matricula-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API didáctica del módulo de matrícula SGU-UNJBG, preparada para 12-Factor y Docker.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js",
+    "migrate": "node src/scripts/migrate.js",
+    "test:integration": "node --test integration/*.test.js"
+  },
+  "dependencies": {
+    "express": "5.1.0",
+    "pg": "8.16.3"
+  }
+}

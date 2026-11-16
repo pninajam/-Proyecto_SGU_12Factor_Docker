@@ -1,0 +1,59 @@
+# Definir los servicios del entorno reproducible de laboratorio.
+services:
+  # Servicio HTTP del módulo de matrícula.
+  api:
+    # Construir la imagen usando el Dockerfile del directorio actual.
+    build:
+      # Usar la raíz del proyecto como contexto de construcción.
+      context: .
+      # Seleccionar explícitamente el Dockerfile del proyecto.
+      dockerfile: Dockerfile
+    # Asignar un nombre local y una etiqueta de desarrollo a la imagen.
+    image: sgu-unjbg/matricula-api:1.0.0
+    # Publicar el puerto de la API en el equipo docente/estudiante.
+    ports:
+      - "${HOST_PORT:-8080}:${PORT:-8080}"
+    # Inyectar configuración al iniciar; no se copia al interior de la imagen.
+    env_file:
+      - .env
+    # Esperar a que PostgreSQL esté saludable antes de iniciar la API.
+    depends_on:
+      db:
+        condition: service_healthy
+    # Reiniciar el servicio ante fallos de proceso, sin sustituir monitoreo.
+    restart: unless-stopped
+    # Comprobar la disponibilidad HTTP del servicio.
+    healthcheck:
+      # Consultar endpoint de readiness desde Node sin instalar curl.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+process.env.PORT+'/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      # Ejecutar la comprobación cada diez segundos.
+      interval: 10s
+      # Limitar cada comprobación a cinco segundos.
+      timeout: 5s
+      # Reintentar tres veces antes de marcarlo como no saludable.
+      retries: 3
+      # Dar tiempo a que el proceso arranque.
+      start_period: 15s
+  # Servicio de base de datos que actúa como backing service.
+  db:
+    # Utilizar una versión principal fija para el entorno del curso.
+    image: postgres:17-alpine
+    # Configurar la base con variables inyectadas al runtime.
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    # Mantener los datos aunque el contenedor de PostgreSQL sea recreado.
+    volumes:
+      - sgu_data:/var/lib/postgresql/data
+    # Comprobar que PostgreSQL acepta conexiones.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Reiniciar la base de datos salvo que se detenga explícitamente.
+    restart: unless-stopped
+# Declarar el volumen nombrado que persiste los datos de matrícula.
+volumes:
+  sgu_data:

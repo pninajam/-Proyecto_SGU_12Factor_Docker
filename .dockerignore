@@ -1,0 +1,18 @@
+# Excluir metadatos Git del contexto de construcción.
+.git
+# Excluir dependencias locales: se instalan dentro de la imagen.
+node_modules
+# Excluir archivos de entorno que podrían contener secretos.
+.env
+.env.*
+# Permitir únicamente la plantilla de variables sin credenciales reales.
+!.env.example
+# Excluir registros, cobertura y temporales.
+*.log
+coverage
+tmp
+.DS_Store
+# Documentación y evidencias no forman parte de la imagen de runtime.
+evidencias
+docs
+*.pdf
