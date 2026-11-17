@@ -1,0 +1,46 @@
+{"timestamp":"2026-11-16T17:39:01.583Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"387d25e4-d91c-4ab0-8cf6-1de39634568b","method":"GET","status":200,"duration_ms":5}
+▶ integración HTTP + PostgreSQL real
+  ✔ readiness 200 después de migrar (16.329316ms)
+{"timestamp":"2026-11-16T17:39:01.599Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"enrollment_created","request_id":"a7019de0-6960-4de0-ba60-419203b0a11c","enrollment_id":"1"}
+{"timestamp":"2026-11-16T17:39:01.599Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"a7019de0-6960-4de0-ba60-419203b0a11c","method":"POST","status":201,"duration_ms":7}
+  ✔ matrícula válida 201 y ocupación persistida (13.461681ms)
+{"timestamp":"2026-11-16T17:39:01.604Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"2fd4670f-ccf1-40ed-9f73-c6332501017c","error_code":"DUPLICATE_ENROLLMENT","status":409}
+{"timestamp":"2026-11-16T17:39:01.604Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"2fd4670f-ccf1-40ed-9f73-c6332501017c","method":"POST","status":409,"duration_ms":2}
+  ✔ matrícula repetida 409 sin incrementar ocupación (3.646777ms)
+{"timestamp":"2026-11-16T17:39:01.607Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"324802bf-1a7e-486d-b77f-8f2c261b90ab","error_code":"STUDENT_NOT_FOUND","status":404}
+{"timestamp":"2026-11-16T17:39:01.607Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"324802bf-1a7e-486d-b77f-8f2c261b90ab","method":"POST","status":404,"duration_ms":1}
+  ✔ estudiante inexistente 404 (2.627167ms)
+{"timestamp":"2026-11-16T17:39:01.610Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"a42e98b7-ea66-4daf-a0e7-6d44adc174fb","error_code":"SECTION_NOT_FOUND","status":404}
+{"timestamp":"2026-11-16T17:39:01.610Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"a42e98b7-ea66-4daf-a0e7-6d44adc174fb","method":"POST","status":404,"duration_ms":1}
+  ✔ sección inexistente 404 (2.748658ms)
+{"timestamp":"2026-11-16T17:39:01.613Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"d8c0b40a-0fd2-4d4f-82e0-9d1d3e1c6b99","error_code":"STUDENT_NOT_FOUND","status":404}
+{"timestamp":"2026-11-16T17:39:01.613Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"d8c0b40a-0fd2-4d4f-82e0-9d1d3e1c6b99","method":"POST","status":404,"duration_ms":2}
+  ✔ estudiante inactivo 404 (2.865853ms)
+{"timestamp":"2026-11-16T17:39:01.616Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"825c642b-e5da-4628-ac6e-b9e5ac4eb466","error_code":"NO_VACANCIES","status":409}
+{"timestamp":"2026-11-16T17:39:01.616Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"825c642b-e5da-4628-ac6e-b9e5ac4eb466","method":"POST","status":409,"duration_ms":1}
+  ✔ sección llena 409 y cero inserciones (3.060663ms)
+{"timestamp":"2026-11-16T17:39:01.619Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"885f69bb-e86a-4229-8c14-c5de6de82dad","error_code":"PERIOD_CLOSED","status":409}
+{"timestamp":"2026-11-16T17:39:01.619Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"885f69bb-e86a-4229-8c14-c5de6de82dad","method":"POST","status":409,"duration_ms":1}
+  ✔ periodo cerrado 409 (2.433163ms)
+{"timestamp":"2026-11-16T17:39:01.624Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"enrollment_created","request_id":"39d3c2b5-8531-46c5-9ec2-e0da38fc1591","enrollment_id":"2"}
+{"timestamp":"2026-11-16T17:39:01.625Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"39d3c2b5-8531-46c5-9ec2-e0da38fc1591","method":"POST","status":201,"duration_ms":3}
+{"timestamp":"2026-11-16T17:39:01.628Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"d45bdf32-57f5-4beb-90c3-cde0fc33cdd0","error_code":"NO_VACANCIES","status":409}
+{"timestamp":"2026-11-16T17:39:01.628Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"d45bdf32-57f5-4beb-90c3-cde0fc33cdd0","method":"POST","status":409,"duration_ms":6}
+  ✔ dos solicitudes concurrentes para una vacante: 201 y 409 (10.082162ms)
+{"timestamp":"2026-11-16T17:39:01.635Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"enrollment_created","request_id":"c2f39f87-5f98-459a-87a3-df9439b591b0","enrollment_id":"3"}
+{"timestamp":"2026-11-16T17:39:01.635Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"c2f39f87-5f98-459a-87a3-df9439b591b0","method":"POST","status":201,"duration_ms":3}
+{"timestamp":"2026-11-16T17:39:01.638Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"3f8f725b-5fb1-4041-96c9-94766f2978fe","error_code":"DUPLICATE_ENROLLMENT","status":409}
+{"timestamp":"2026-11-16T17:39:01.638Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"3f8f725b-5fb1-4041-96c9-94766f2978fe","method":"POST","status":409,"duration_ms":5}
+  ✔ duplicados concurrentes: una sola matrícula (9.147027ms)
+{"timestamp":"2026-11-16T17:39:01.640Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"f25a9d2f-f96e-48d7-98e7-bbf778fe208c","error_code":"INVALID_STUDENT_ID","status":422}
+{"timestamp":"2026-11-16T17:39:01.640Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"f25a9d2f-f96e-48d7-98e7-bbf778fe208c","method":"POST","status":422,"duration_ms":0}
+  ✔ ID inválido 422 (1.191556ms)
+✔ integración HTTP + PostgreSQL real (94.156383ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 205.469986

@@ -1,0 +1,15 @@
+OK sintaxis JS: integration/enrollment.test.js
+OK sintaxis JS: public/app.js
+OK sintaxis JS: src/app.js
+OK sintaxis JS: src/config.js
+OK sintaxis JS: src/db.js
+OK sintaxis JS: src/enrollment-service.js
+OK sintaxis JS: src/errors.js
+OK sintaxis JS: src/logger.js
+OK sintaxis JS: src/scripts/migrate.js
+OK sintaxis JS: src/server.js
+OK sintaxis JS: test/config.test.js
+OK sintaxis JS: test/domain.test.js
+OK sintaxis JS: test/http.test.js
+OK lectura YAML: compose.yaml (no sustituye docker compose config)
+OK lectura YAML: compose.test.yaml (no sustituye docker compose config)

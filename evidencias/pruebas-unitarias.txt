@@ -1,0 +1,50 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> sgu-matricula-api@1.0.0 test
+> node --test test/*.test.js
+
+✔ configuración válida permite iniciar (76.108555ms)
+✔ contraseña ausente falla sin imprimir secretos (40.981524ms)
+✔ rechaza PORT="8080abc" (76.971416ms)
+✔ rechaza PORT="1.5" (87.789298ms)
+✔ rechaza PORT="0" (49.547239ms)
+✔ rechaza PORT="-1" (41.250063ms)
+✔ rechaza PORT="65536" (36.31684ms)
+✔ rechaza PORT=" " (55.003459ms)
+✔ rechaza PORT="1e3" (125.626652ms)
+✔ rechaza puerto PostgreSQL fuera de rango (43.852986ms)
+✔ rechaza timeout negativo (44.901237ms)
+✔ AppError expone estado y código controlados (0.805881ms)
+✔ un error desconocido se convierte en respuesta genérica (0.164245ms)
+{"timestamp":"2026-11-16T17:36:04.175Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"df072ada-6cc6-4040-ba60-756d682f3a16","method":"GET","status":200,"duration_ms":4}
+▶ contrato HTTP y trazabilidad sin PostgreSQL (doble de prueba)
+  ✔ liveness devuelve 200 sin consultar DB (21.588678ms)
+{"timestamp":"2026-11-16T17:36:04.190Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"caso-json-400","error_code":"INVALID_JSON","status":400}
+{"timestamp":"2026-11-16T17:36:04.191Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"caso-json-400","method":"POST","status":400,"duration_ms":6}
+  ✔ JSON roto devuelve 400 con requestId (13.651684ms)
+{"timestamp":"2026-11-16T17:36:04.197Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"a2bff5be-5456-4af7-8c16-448ca8965424","error_code":"PAYLOAD_TOO_LARGE","status":413}
+{"timestamp":"2026-11-16T17:36:04.198Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"a2bff5be-5456-4af7-8c16-448ca8965424","method":"POST","status":413,"duration_ms":2}
+  ✔ cuerpo grande devuelve 413 con requestId (4.774866ms)
+{"timestamp":"2026-11-16T17:36:04.202Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"4a4d6875-537d-4ff7-a0b0-1b0babe7ded5","error_code":"INVALID_STUDENT_ID","status":422}
+{"timestamp":"2026-11-16T17:36:04.202Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"4a4d6875-537d-4ff7-a0b0-1b0babe7ded5","method":"POST","status":422,"duration_ms":1}
+  ✔ ID inválido devuelve 422 (3.955664ms)
+{"timestamp":"2026-11-16T17:36:04.205Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"2f520d3e-b0c8-4ef0-8cb7-4ec76331582c","error_code":"INVALID_STUDENT_ID","status":422}
+{"timestamp":"2026-11-16T17:36:04.206Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"2f520d3e-b0c8-4ef0-8cb7-4ec76331582c","method":"POST","status":422,"duration_ms":1}
+  ✔ requestId demasiado largo se sustituye por UUID (3.573966ms)
+{"timestamp":"2026-11-16T17:36:04.209Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"40fc77a8-e815-4b19-a9a6-8ba08f566d70","method":"GET","status":404,"duration_ms":1}
+  ✔ ruta ausente devuelve 404 JSON (2.098558ms)
+{"timestamp":"2026-11-16T17:36:04.210Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"b5ed634f-17c2-4105-9ed7-aba1819d5fe7","error_code":"NOT_READY","status":503}
+{"timestamp":"2026-11-16T17:36:04.211Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"b5ed634f-17c2-4105-9ed7-aba1819d5fe7","method":"GET","status":503,"duration_ms":1}
+  ✔ readiness fallida devuelve 503 sin SQL (1.796838ms)
+{"timestamp":"2026-11-16T17:36:04.213Z","level":"ERROR","service":"sgu-matricula-api","environment":"development","event":"request_failed","request_id":"55ac0d75-22ce-4e68-a5a0-3e2daf14b095","error_code":"INTERNAL_ERROR","status":500}
+{"timestamp":"2026-11-16T17:36:04.213Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"request_completed","request_id":"55ac0d75-22ce-4e68-a5a0-3e2daf14b095","method":"POST","status":500,"duration_ms":0}
+  ✔ error inesperado devuelve 500 y no filtra secretos en logs (2.250624ms)
+✔ contrato HTTP y trazabilidad sin PostgreSQL (doble de prueba) (62.43543ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 762.058076

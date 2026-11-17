@@ -1,0 +1,280 @@
+{
+  "runtime": "v24.22.1",
+  "execution": "Node local y PostgreSQL real; sin Docker",
+  "results": [
+    {
+      "path": "/health/ready",
+      "status": 503,
+      "body": {
+        "error": {
+          "code": "NOT_READY",
+          "message": "La base de datos o el esquema no están disponibles."
+        },
+        "requestId": "7eef849a-c7b3-46d1-91e4-2d65d308c257"
+      }
+    },
+    {
+      "path": "/health/ready",
+      "status": 200,
+      "body": {
+        "status": "ready",
+        "requestId": "650e3611-536a-436e-a2a9-205ad0bab1ef"
+      }
+    },
+    {
+      "path": "/api/v1/catalog",
+      "status": 200,
+      "body": {
+        "data": {
+          "students": [
+            {
+              "id": "1",
+              "university_code": "20260001",
+              "full_name": "Ana Torres Quispe"
+            },
+            {
+              "id": "2",
+              "university_code": "20260002",
+              "full_name": "Luis Mamani Flores"
+            },
+            {
+              "id": "3",
+              "university_code": "20260003",
+              "full_name": "María Choque Apaza"
+            },
+            {
+              "id": "4",
+              "university_code": "20260004",
+              "full_name": "Carlos Condori Rojas"
+            },
+            {
+              "id": "5",
+              "university_code": "20260005",
+              "full_name": "Valeria Nina Cárdenas"
+            }
+          ],
+          "sections": [
+            {
+              "id": "1",
+              "course_code": "ESIS-101",
+              "section_code": "A",
+              "vacancies": 30,
+              "enrolled": 0,
+              "academic_period": "2026-II"
+            },
+            {
+              "id": "2",
+              "course_code": "ICIV-201",
+              "section_code": "A",
+              "vacancies": 25,
+              "enrolled": 0,
+              "academic_period": "2026-II"
+            },
+            {
+              "id": "3",
+              "course_code": "MATE-110",
+              "section_code": "A",
+              "vacancies": 20,
+              "enrolled": 0,
+              "academic_period": "2026-II"
+            },
+            {
+              "id": "4",
+              "course_code": "ADMI-120",
+              "section_code": "A",
+              "vacancies": 25,
+              "enrolled": 0,
+              "academic_period": "2026-II"
+            }
+          ],
+          "period": "2026-II"
+        },
+        "requestId": "1bc56879-ae1b-4793-8fd3-68f87c13a505"
+      }
+    },
+    {
+      "path": "/api/v1/dashboard",
+      "status": 200,
+      "body": {
+        "data": {
+          "period": "2026-II",
+          "metrics": {
+            "activeStudents": 5,
+            "enrollments": 0,
+            "activeSections": 4,
+            "availableVacancies": 100
+          },
+          "faculties": [
+            {
+              "name": "Facultad de Ingeniería",
+              "activeStudents": 3,
+              "enrolledStudents": 0,
+              "availableVacancies": 55,
+              "careers": [
+                {
+                  "name": "Ingeniería en Informática y Sistemas",
+                  "level": "S1",
+                  "activeStudents": 2,
+                  "enrolledStudents": 0,
+                  "availableVacancies": 30
+                },
+                {
+                  "name": "Ingeniería Civil",
+                  "level": "S1",
+                  "activeStudents": 1,
+                  "enrolledStudents": 0,
+                  "availableVacancies": 25
+                }
+              ]
+            },
+            {
+              "name": "Facultad de Ciencias",
+              "activeStudents": 1,
+              "enrolledStudents": 0,
+              "availableVacancies": 20,
+              "careers": [
+                {
+                  "name": "Matemática",
+                  "level": "S1",
+                  "activeStudents": 1,
+                  "enrolledStudents": 0,
+                  "availableVacancies": 20
+                }
+              ]
+            },
+            {
+              "name": "Facultad de Ciencias Jurídicas y Empresariales",
+              "activeStudents": 1,
+              "enrolledStudents": 0,
+              "availableVacancies": 25,
+              "careers": [
+                {
+                  "name": "Administración",
+                  "level": "S1",
+                  "activeStudents": 1,
+                  "enrolledStudents": 0,
+                  "availableVacancies": 25
+                }
+              ]
+            }
+          ]
+        },
+        "requestId": "20f802bb-217f-4120-8e0a-1ee12378aa82"
+      }
+    },
+    {
+      "path": "/api/v1/enrollments",
+      "status": 200,
+      "body": {
+        "data": [],
+        "requestId": "fa43f4af-a793-405b-83ac-9845ca7ec330"
+      }
+    },
+    {
+      "path": "/api/v1/enrollments",
+      "status": 201,
+      "body": {
+        "data": {
+          "id": "1",
+          "student_id": "1",
+          "section_id": "1",
+          "created_at": "2026-11-16T17:39:01.882Z"
+        },
+        "requestId": "0e7c1fd3-ca75-4765-a3b9-7cc57bb96807"
+      }
+    },
+    {
+      "path": "/api/v1/enrollments",
+      "status": 409,
+      "body": {
+        "error": {
+          "code": "DUPLICATE_ENROLLMENT",
+          "message": "El estudiante ya está matriculado en esta sección."
+        },
+        "requestId": "c0e12984-7eba-4ad1-a101-ecf77e5a3653"
+      }
+    },
+    {
+      "path": "/api/v1/enrollments",
+      "status": 422,
+      "body": {
+        "error": {
+          "code": "INVALID_STUDENT_ID",
+          "message": "studentId debe ser un entero positivo."
+        },
+        "requestId": "1aa16ffc-ad9f-4858-a513-9407ec086d22"
+      }
+    },
+    {
+      "path": "/api/v1/enrollments",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "id": "1",
+            "student_id": "1",
+            "university_code": "20260001",
+            "full_name": "Ana Torres Quispe",
+            "section_id": "1",
+            "course_code": "ESIS-101",
+            "section_code": "A",
+            "academic_period": "2026-II",
+            "created_at": "2026-11-16T17:39:01.882Z",
+            "request_id": "0e7c1fd3-ca75-4765-a3b9-7cc57bb96807"
+          }
+        ],
+        "requestId": "5b697522-f69c-490a-889d-7b00aa2f3bac"
+      }
+    },
+    {
+      "path": "/api/v1/enrollments",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "id": "1",
+            "student_id": "1",
+            "university_code": "20260001",
+            "full_name": "Ana Torres Quispe",
+            "section_id": "1",
+            "course_code": "ESIS-101",
+            "section_code": "A",
+            "academic_period": "2026-II",
+            "created_at": "2026-11-16T17:39:01.882Z",
+            "request_id": "0e7c1fd3-ca75-4765-a3b9-7cc57bb96807"
+          }
+        ],
+        "requestId": "f274fd9b-5f39-4444-93c6-c45d8d8f73fe"
+      }
+    },
+    {
+      "path": "/api/v1/enrollments",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "id": "1",
+            "student_id": "1",
+            "university_code": "20260001",
+            "full_name": "Ana Torres Quispe",
+            "section_id": "1",
+            "course_code": "ESIS-101",
+            "section_code": "A",
+            "academic_period": "2026-II",
+            "created_at": "2026-11-16T17:39:01.882Z",
+            "request_id": "0e7c1fd3-ca75-4765-a3b9-7cc57bb96807"
+          }
+        ],
+        "requestId": "318914e7-24d0-4a39-857d-50864731baed"
+      }
+    }
+  ],
+  "postgresql": "PostgreSQL 17.11 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+  "persistence": {
+    "pass": true,
+    "enrollmentIds": [
+      "1"
+    ],
+    "scope": "Reinicio de procesos Node y PostgreSQL con directorio persistente; no prueba volumen Docker"
+  }
+}

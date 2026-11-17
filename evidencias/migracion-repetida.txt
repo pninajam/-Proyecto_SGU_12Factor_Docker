@@ -1,0 +1,1 @@
+{"timestamp":"2026-11-16T17:39:01.952Z","level":"INFO","service":"sgu-matricula-api","environment":"development","event":"migration_completed"}

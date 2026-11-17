@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <!-- Codificación UTF-8 para caracteres en español. -->
+  <meta charset="utf-8">
+  <!-- Adaptación a monitores, tabletas y teléfonos. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Descripción del panel académico. -->
+  <meta name="description" content="Dashboard académico del SGU-UNJBG.">
+  <!-- Título de la pestaña. -->
+  <title>SGU-UNJBG | Dashboard académico</title>
+  <!-- Estilos locales sin dependencia de CDN. -->
+  <link rel="stylesheet" href="/styles.css">
+  <!-- Ejecutar la lógica cuando el HTML haya sido analizado. -->
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="institution"><div class="crest">UNJBG</div><div><strong>SGU</strong><small>Sistema de Gestión<br>Universitaria</small></div></div>
+    <div class="profile"><div class="avatar">AD</div><div><strong>Administrador académico</strong><small>Entorno demostrativo</small></div></div>
+    <nav aria-label="Navegación principal">
+      <span class="nav-caption">GENERAL</span><a class="nav-link active" href="#dashboard"><span>▦</span> Dashboard</a>
+      <span class="nav-caption">GESTIÓN ACADÉMICA</span><a class="nav-link" href="#resumen"><span>▤</span> Resumen por escuela</a><a class="nav-link" href="#matricula"><span>＋</span> Registrar matrícula</a><a class="nav-link" href="#registros"><span>▥</span> Matrículas registradas</a>
+      <span class="nav-caption">PLATAFORMA</span><a class="nav-link" href="#arquitectura"><span>⌘</span> Arquitectura API</a>
+    </nav>
+    <div class="sidebar-footer"><span class="status-dot" id="sidebarDot"></span><span id="sidebarStatus">Conectando con API…</span></div>
+  </aside>
+  <main class="main-content" id="dashboard">
+    <header class="page-header"><div><p class="breadcrumb">SGU / Gestión académica / <strong>Dashboard</strong></p><h1>Panel de control académico</h1><p class="page-subtitle">Módulo de matrícula · Periodo académico <strong id="periodLabel">2026-II</strong></p></div><div class="header-actions"><span class="environment-chip">● LABORATORIO ACADÉMICO</span><button class="icon-button" id="refreshButton" type="button" title="Actualizar datos">↻</button></div></header>
+    <section class="kpi-grid" aria-label="Indicadores académicos">
+      <article class="kpi-card kpi-blue"><div><span class="kpi-label">ESTUDIANTES ACTIVOS</span><strong id="studentCount">—</strong><small>En el catálogo académico</small></div><div class="kpi-icon">♟</div><a href="#resumen">Ver detalle <span>›</span></a></article>
+      <article class="kpi-card kpi-green"><div><span class="kpi-label">MATRÍCULAS REGISTRADAS</span><strong id="enrollmentCount">—</strong><small>Registros persistidos en PostgreSQL</small></div><div class="kpi-icon">✓</div><a href="#registros">Ver detalle <span>›</span></a></article>
+      <article class="kpi-card kpi-orange"><div><span class="kpi-label">VACANTES DISPONIBLES</span><strong id="vacancyCount">—</strong><small>En secciones del periodo vigente</small></div><div class="kpi-icon">▣</div><a href="#resumen">Ver detalle <span>›</span></a></article>
+      <article class="kpi-card kpi-violet"><div><span class="kpi-label">SECCIONES ACTIVAS</span><strong id="sectionCount">—</strong><small>Oferta académica habilitada</small></div><div class="kpi-icon">▤</div><a href="#matricula">Ir a matrícula <span>›</span></a></article>
+    </section>
+    <section class="status-strip"><div class="api-state"><span class="status-dot" id="connectionDot"></span><strong id="connectionText">Comprobando servicios…</strong><small id="apiDetail">API REST · PostgreSQL 17</small></div><div class="status-meta"><span>API <b id="apiStatus">—</b></span><span>Última actualización <b id="lastUpdated">—</b></span></div></section>
+    <section class="content-card" id="resumen"><div class="section-heading"><div><p class="section-kicker">ANÁLISIS ACADÉMICO</p><h2>Resumen por facultad y escuela profesional</h2><p>Datos demostrativos agrupados para explicar indicadores y consultas agregadas.</p></div><span class="period-pill" id="summaryPeriod">Periodo 2026-II</span></div><div class="table-scroll"><table class="academic-table"><thead><tr><th>#</th><th>FACULTAD / ESCUELA PROFESIONAL</th><th>NIVEL</th><th>ESTUDIANTES ACTIVOS</th><th>MATRICULADOS</th><th>VACANTES</th></tr></thead><tbody id="summaryRows"><tr><td colspan="6" class="empty-cell">Cargando resumen académico…</td></tr></tbody></table></div><p class="table-note">* Los nombres, cantidades y códigos son ficticios y tienen finalidad exclusivamente didáctica.</p></section>
+    <section class="two-column" id="matricula">
+      <article class="content-card"><div class="section-heading compact"><div><p class="section-kicker">ENTRADA · REQUEST</p><h2>Registrar matrícula</h2><p>Selecciona estudiante y sección para enviar una solicitud REST.</p></div><span class="method-pill">POST</span></div><form id="enrollmentForm" class="enrollment-form"><label for="studentId">Estudiante</label><select id="studentId" name="studentId" required><option value="">Cargando estudiantes…</option></select><label for="sectionId">Asignatura / sección</label><select id="sectionId" name="sectionId" required><option value="">Cargando secciones…</option></select><button id="submitButton" class="primary-button" type="submit">Procesar matrícula <span>→</span></button></form><div id="feedback" class="feedback neutral" role="status" aria-live="polite">Esperando conexión con el servidor.</div><div class="endpoint-line"><span>Endpoint</span><code>POST /api/v1/enrollments</code></div></article>
+      <article class="content-card response-card"><div class="section-heading compact"><div><p class="section-kicker">SALIDA · RESPONSE</p><h2>Inspección de respuesta HTTP</h2><p>Visualiza el contrato JSON y el código de estado devuelto.</p></div><span id="httpStatus" class="http-pill">SIN PETICIÓN</span></div><pre class="json-console"><code id="jsonOutput">{
+  "message": "Registra una matrícula para observar la entrada y salida.",
+  "status": "ready"
+}</code></pre><div class="endpoint-line"><span>Request ID</span><code id="requestId">—</code></div></article>
+    </section>
+    <section class="content-card" id="registros"><div class="section-heading"><div><p class="section-kicker">TRAZABILIDAD</p><h2>Últimas matrículas registradas</h2><p>Información recuperada desde PostgreSQL mediante GET /api/v1/enrollments.</p></div><span class="record-count" id="recordCount">0 registros</span></div><div class="table-scroll"><table class="academic-table records-table"><thead><tr><th>ID</th><th>CÓDIGO UNIVERSITARIO</th><th>ESTUDIANTE</th><th>ASIGNATURA</th><th>PERIODO</th><th>FECHA DE REGISTRO</th></tr></thead><tbody id="enrollmentRows"><tr><td colspan="6" class="empty-cell">Todavía no hay matrículas registradas.</td></tr></tbody></table></div></section>
+    <section class="content-card architecture-card" id="arquitectura"><div class="section-heading compact"><div><p class="section-kicker">ARQUITECTURA DE LA SOLUCIÓN</p><h2>Flujo de datos del módulo de matrícula</h2></div></div><div class="architecture-flow"><div class="architecture-node"><span>01</span><strong>Cliente web</strong><small>HTML · CSS · JavaScript</small></div><b>→</b><div class="architecture-node"><span>02</span><strong>API REST</strong><small>Node.js 24 · Express 5</small></div><b>→</b><div class="architecture-node"><span>03</span><strong>Reglas de negocio</strong><small>Validación · Transacción</small></div><b>→</b><div class="architecture-node"><span>04</span><strong>Base de datos</strong><small>PostgreSQL 17</small></div></div></section>
+    <footer class="page-footer">Sistema de Gestión Universitaria · UNJBG · Proyecto académico de Ingeniería de Software I · Datos ficticios de laboratorio</footer>
+  </main>
+</div>
+</body></html>
