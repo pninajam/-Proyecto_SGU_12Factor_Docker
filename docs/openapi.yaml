@@ -1,0 +1,693 @@
+openapi: 3.0.3
+info:
+  title: API SGU–UNJBG
+  version: 1.1.0
+  description: >
+    Contrato Design-First del proyecto didáctico SGU–UNJBG. Describe las rutas
+    implementadas en Express para salud, catálogo, dashboard, matrículas,
+    administración de catálogos y reportes. Los datos del proyecto son ficticios.
+  contact:
+    name: Equipo de laboratorio SGU–UNJBG
+servers:
+  - url: http://localhost:8080
+    description: Entorno local con Docker Compose
+tags:
+  - name: Salud
+    description: Estado de ejecución y disponibilidad del servicio.
+  - name: Académico
+    description: Catálogos y datos de matrícula.
+  - name: Matrículas
+    description: Registro y consulta de matrículas.
+  - name: Administración
+    description: CRUD genérico de catálogos académicos.
+  - name: Reportes
+    description: Reportes JSON, PDF y Excel.
+paths:
+  /health/live:
+    get:
+      tags: [Salud]
+      summary: Verificar que el proceso API está activo
+      operationId: healthLive
+      responses:
+        '200':
+          description: Proceso activo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /health/ready:
+    get:
+      tags: [Salud]
+      summary: Verificar disponibilidad de API y PostgreSQL
+      operationId: healthReady
+      responses:
+        '200':
+          description: API lista para recibir tráfico.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/catalog:
+    get:
+      tags: [Académico]
+      summary: Obtener catálogos para el formulario de matrícula
+      operationId: getCatalog
+      responses:
+        '200':
+          description: Estudiantes y secciones disponibles, además del periodo activo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/dashboard:
+    get:
+      tags: [Académico]
+      summary: Obtener indicadores y resumen académico
+      operationId: getDashboard
+      responses:
+        '200':
+          description: Indicadores generales y agrupación por facultad y escuela.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/enrollments:
+    get:
+      tags: [Matrículas]
+      summary: Listar las últimas matrículas registradas
+      operationId: listEnrollments
+      responses:
+        '200':
+          description: Lista de hasta 100 matrículas recientes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentListResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Matrículas]
+      summary: Registrar una matrícula
+      description: >
+        Ejecuta la regla de negocio dentro de una transacción y bloquea la
+        sección para comprobar vacantes. Requiere estudiante activo, periodo
+        habilitado, sección existente, vacante disponible y matrícula no duplicada.
+      operationId: createEnrollment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollmentCreate'
+            example:
+              studentId: 1
+              sectionId: 1
+      responses:
+        '201':
+          description: Matrícula creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResponse'
+        '404':
+          description: Sección inexistente o estudiante inexistente/inactivo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Periodo cerrado, matrícula duplicada o vacantes agotadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Identificadores inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/admin/{resource}:
+    parameters:
+      - $ref: '#/components/parameters/AdminResource'
+    get:
+      tags: [Administración]
+      summary: Listar registros de un catálogo administrativo
+      operationId: listAdminResource
+      parameters:
+        - name: page
+          in: query
+          description: Número de página; el valor inválido se normaliza a 1 en la implementación actual.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          description: Registros por página; la implementación limita el valor al rango 1–100.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: search
+          in: query
+          description: Texto de búsqueda; máximo 100 caracteres en la implementación.
+          schema:
+            type: string
+            maxLength: 100
+        - name: sort
+          in: query
+          description: Clave de ordenamiento permitida para el recurso.
+          schema:
+            type: string
+            default: id
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Página de registros con metadatos, columnas y ordenamiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminListResponse'
+        '404':
+          description: Nombre de recurso administrativo no permitido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Administración]
+      summary: Crear un registro en un catálogo administrativo
+      operationId: createAdminResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >
+                Los campos admitidos dependen del valor de resource. Consultar
+                los ejemplos de payload en docs/SEMANA15_API_OPENAPI_DESIGN_FIRST.md.
+              additionalProperties: true
+      responses:
+        '201':
+          description: Registro creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRecordResponse'
+        '404':
+          description: Recurso no permitido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Restricción de unicidad o integridad referencial.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Datos inválidos o restricción de tabla.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/admin/{resource}/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AdminResource'
+      - name: id
+        in: path
+        required: true
+        description: Identificador numérico positivo del registro.
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      tags: [Administración]
+      summary: Consultar un registro administrativo
+      operationId: getAdminResource
+      responses:
+        '200':
+          description: Registro encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRecordResponse'
+        '404':
+          description: Recurso o registro no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Identificador inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [Administración]
+      summary: Actualizar campos de un registro administrativo
+      description: >
+        IMPORTANTE: el código actual procesa PUT como actualización parcial:
+        actualiza únicamente los campos enviados. Esta es una deuda semántica
+        respecto del uso REST habitual de PUT como reemplazo. Para una evolución
+        alineada con HTTP, se recomienda introducir PATCH para la actualización
+        parcial y reservar PUT para reemplazo completo.
+      operationId: updateAdminResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Registro actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRecordResponse'
+        '404':
+          description: Recurso o registro no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicto de integridad referencial.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Datos inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Administración]
+      summary: Eliminar un registro administrativo
+      operationId: deleteAdminResource
+      responses:
+        '200':
+          description: Confirmación de eliminación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '404':
+          description: Recurso o registro no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: No se puede eliminar por relaciones existentes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Identificador inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/reports/summary:
+    get:
+      tags: [Reportes]
+      summary: Obtener resumen estadístico en JSON
+      operationId: getReportSummary
+      responses:
+        '200':
+          description: Totales y agrupaciones por facultad y periodo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSummaryResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/reports/summary.pdf:
+    get:
+      tags: [Reportes]
+      summary: Descargar o visualizar reporte ejecutivo PDF
+      operationId: getSummaryPdf
+      parameters:
+        - $ref: '#/components/parameters/DownloadQuery'
+      responses:
+        '200':
+          description: Documento PDF.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/reports/export.xlsx:
+    get:
+      tags: [Reportes]
+      summary: Exportar libro Excel consolidado
+      operationId: exportAllReportsXlsx
+      responses:
+        '200':
+          description: Libro XLSX con una hoja por catálogo.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/reports/{resource}.pdf:
+    get:
+      tags: [Reportes]
+      summary: Generar reporte PDF de un recurso
+      operationId: getResourcePdf
+      parameters:
+        - $ref: '#/components/parameters/ReportResource'
+        - $ref: '#/components/parameters/DownloadQuery'
+      responses:
+        '200':
+          description: Documento PDF.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Recurso de reporte no permitido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/reports/{resource}.xlsx:
+    get:
+      tags: [Reportes]
+      summary: Exportar un recurso a Excel
+      operationId: getResourceXlsx
+      parameters:
+        - $ref: '#/components/parameters/ReportResource'
+      responses:
+        '200':
+          description: Libro XLSX de un recurso.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Recurso de reporte no permitido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  parameters:
+    AdminResource:
+      name: resource
+      in: path
+      required: true
+      description: Recurso CRUD admitido por el backend.
+      schema:
+        type: string
+        enum: [academic_periods, faculties, careers, students, sections]
+    ReportResource:
+      name: resource
+      in: path
+      required: true
+      description: Recurso con reporte habilitado.
+      schema:
+        type: string
+        enum: [academic_periods, faculties, careers, students, sections, enrollments]
+    DownloadQuery:
+      name: download
+      in: query
+      required: false
+      description: Use 1 para forzar descarga; por defecto el PDF se visualiza inline.
+      schema:
+        type: string
+        enum: ['1']
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, requestId]
+      properties:
+        status:
+          type: string
+          enum: [alive, ready]
+        requestId:
+          type: string
+    ErrorResponse:
+      type: object
+      required: [error, requestId]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+        requestId:
+          type: string
+    EnrollmentCreate:
+      type: object
+      additionalProperties: false
+      required: [studentId, sectionId]
+      properties:
+        studentId:
+          type: integer
+          minimum: 1
+          example: 1
+        sectionId:
+          type: integer
+          minimum: 1
+          example: 1
+    Enrollment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        student_id:
+          type: integer
+          format: int64
+        section_id:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+    EnrollmentResponse:
+      type: object
+      required: [data, requestId]
+      properties:
+        data:
+          $ref: '#/components/schemas/Enrollment'
+        requestId:
+          type: string
+    EnrollmentListResponse:
+      type: object
+      required: [data, requestId]
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              student_id: { type: integer }
+              university_code: { type: string }
+              full_name: { type: string }
+              section_id: { type: integer }
+              course_code: { type: string }
+              section_code: { type: string }
+              academic_period: { type: string }
+              created_at: { type: string, format: date-time }
+              request_id: { type: string }
+        requestId:
+          type: string
+    StudentCatalogItem:
+      type: object
+      properties:
+        id: { type: integer }
+        university_code: { type: string }
+        full_name: { type: string }
+    SectionCatalogItem:
+      type: object
+      properties:
+        id: { type: integer }
+        course_code: { type: string }
+        section_code: { type: string }
+        vacancies: { type: integer }
+        enrolled: { type: integer }
+        academic_period: { type: string }
+    CatalogResponse:
+      type: object
+      required: [data, requestId]
+      properties:
+        data:
+          type: object
+          properties:
+            students:
+              type: array
+              items: { $ref: '#/components/schemas/StudentCatalogItem' }
+            sections:
+              type: array
+              items: { $ref: '#/components/schemas/SectionCatalogItem' }
+            period:
+              type: string
+        requestId:
+          type: string
+    DashboardResponse:
+      type: object
+      required: [data, requestId]
+      properties:
+        data:
+          type: object
+          properties:
+            period: { type: string }
+            metrics:
+              type: object
+              properties:
+                activeStudents: { type: integer }
+                enrollments: { type: integer }
+                activeSections: { type: integer }
+                availableVacancies: { type: integer }
+            faculties:
+              type: array
+              items:
+                type: object
+                properties:
+                  name: { type: string }
+                  activeStudents: { type: integer }
+                  enrolledStudents: { type: integer }
+                  availableVacancies: { type: integer }
+                  careers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name: { type: string }
+                        level: { type: string }
+                        activeStudents: { type: integer }
+                        enrolledStudents: { type: integer }
+                        availableVacancies: { type: integer }
+        requestId:
+          type: string
+    AdminListResponse:
+      type: object
+      required: [data, pagination, columns, sorting, requestId]
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        pagination:
+          type: object
+          properties:
+            page: { type: integer }
+            pageSize: { type: integer }
+            total: { type: integer }
+            totalPages: { type: integer }
+        columns:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              label: { type: string }
+        sorting:
+          type: object
+          properties:
+            sort: { type: string }
+            direction: { type: string, enum: [asc, desc] }
+        requestId:
+          type: string
+    AdminRecordResponse:
+      type: object
+      required: [data, requestId]
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+        requestId:
+          type: string
+    DeleteResponse:
+      type: object
+      required: [data, requestId]
+      properties:
+        data:
+          type: object
+          properties:
+            id: { type: integer }
+            deleted: { type: boolean }
+        requestId:
+          type: string
+    ReportSummaryResponse:
+      type: object
+      required: [data, requestId]
+      properties:
+        data:
+          type: object
+          properties:
+            totals:
+              type: object
+              additionalProperties: { type: integer }
+            faculties:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            periods:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+        requestId:
+          type: string
+  responses:
+    InternalError:
+      description: Error inesperado; revisar logs utilizando requestId.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

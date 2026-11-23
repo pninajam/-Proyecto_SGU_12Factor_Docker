@@ -12,7 +12,7 @@ services:
     image: sgu-unjbg/matricula-api:1.0.0
     # Publicar el puerto de la API en el equipo docente/estudiante.
     ports:
-      - "${HOST_PORT:-8080}:${PORT:-8080}"
+      - "8080:8080"
     # Inyectar configuración al iniciar; no se copia al interior de la imagen.
     env_file:
       - .env
@@ -25,7 +25,7 @@ services:
     # Comprobar la disponibilidad HTTP del servicio.
     healthcheck:
       # Consultar endpoint de readiness desde Node sin instalar curl.
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+process.env.PORT+'/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       # Ejecutar la comprobación cada diez segundos.
       interval: 10s
       # Limitar cada comprobación a cinco segundos.
@@ -54,6 +54,29 @@ services:
       retries: 10
     # Reiniciar la base de datos salvo que se detenga explícitamente.
     restart: unless-stopped
+
+  # Interfaz web de administración de PostgreSQL.
+  pgadmin:
+    # Fijar una versión de pgAdmin 4 para el laboratorio.
+    image: dpage/pgadmin4:9.9
+    # Inyectar credenciales iniciales desde .env.
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    # Publicar pgAdmin en el puerto 5050 del equipo anfitrión.
+    ports:
+      - "5050:80"
+    # Conservar la configuración y servidores registrados en pgAdmin.
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    # Esperar a que PostgreSQL acepte conexiones.
+    depends_on:
+      db:
+        condition: service_healthy
+    # Reiniciar el servicio ante fallos.
+    restart: unless-stopped
+
 # Declarar el volumen nombrado que persiste los datos de matrícula.
 volumes:
   sgu_data:
+  pgadmin_data:

@@ -2,12 +2,17 @@
 const env = process.env;
 
 // Convertir una variable a entero y rechazar valores inválidos.
-function readInteger(name, fallback, max = 65535) {
-  const raw = (env[name] ?? String(fallback)).trim();
-  const value = Number(raw);
-  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(value) || value < 1 || value > max) {
-    throw new Error(`La variable ${name} debe ser un entero entre 1 y ${max}.`);
+function readInteger(name, fallback) {
+  // Obtener el valor de entorno o usar el valor predeterminado.
+  const raw = env[name] ?? String(fallback);
+  // Convertir el texto recibido a número entero.
+  const value = Number.parseInt(raw, 10);
+  // Comprobar que el resultado sea un entero válido.
+  if (!Number.isInteger(value)) {
+    // Detener el arranque porque la configuración es inválida.
+    throw new Error(`La variable ${name} debe ser un número entero.`);
   }
+  // Devolver el valor validado.
   return value;
 }
 
@@ -41,5 +46,5 @@ export const config = Object.freeze({
   // Resolver la contraseña desde el entorno de ejecución.
   dbPassword: required("DB_PASSWORD"),
   // Configurar el tiempo máximo de espera de conexión.
-  dbConnectTimeoutMs: readInteger("DB_CONNECT_TIMEOUT_MS", 3000, 2147483647)
+  dbConnectTimeoutMs: readInteger("DB_CONNECT_TIMEOUT_MS", 3000)
 });

@@ -12,7 +12,3 @@ node_modules
 coverage
 tmp
 .DS_Store
-# Documentación y evidencias no forman parte de la imagen de runtime.
-evidencias
-docs
-*.pdf

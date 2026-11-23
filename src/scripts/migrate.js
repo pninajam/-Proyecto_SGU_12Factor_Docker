@@ -5,7 +5,6 @@ import { log } from "../logger.js";
 
 // Definir el esquema inicial del módulo de matrícula.
 const schema = `
-  BEGIN;
   CREATE TABLE IF NOT EXISTS academic_periods (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(30) NOT NULL,
@@ -57,6 +56,16 @@ const schema = `
     UNIQUE (student_id, section_id)
   );
 
+
+  -- Índices para acelerar filtros, relaciones y listados administrativos.
+  CREATE INDEX IF NOT EXISTS ix_careers_faculty_id ON careers(faculty_id);
+  CREATE INDEX IF NOT EXISTS ix_students_career_id ON students(career_id);
+  CREATE INDEX IF NOT EXISTS ix_students_full_name ON students(full_name);
+  CREATE INDEX IF NOT EXISTS ix_sections_period_id ON sections(academic_period_id);
+  CREATE INDEX IF NOT EXISTS ix_sections_career_id ON sections(career_id);
+  CREATE INDEX IF NOT EXISTS ix_enrollments_student_id ON enrollments(student_id);
+  CREATE INDEX IF NOT EXISTS ix_enrollments_section_id ON enrollments(section_id);
+
   INSERT INTO academic_periods (id, name, is_active)
   VALUES (1, '2026-II', TRUE)
   ON CONFLICT (id) DO NOTHING;
@@ -88,13 +97,6 @@ const schema = `
     (3, 'MATE-110', 'A', 1, 20, 0, 3),
     (4, 'ADMI-120', 'A', 1, 25, 0, 4)
   ON CONFLICT (id) DO UPDATE SET career_id = EXCLUDED.career_id;
-  -- Los IDs de la semilla son explícitos; avanzar secuencias evita futuros duplicados.
-  SELECT setval(pg_get_serial_sequence('academic_periods','id'), (SELECT MAX(id) FROM academic_periods));
-  SELECT setval(pg_get_serial_sequence('faculties','id'), (SELECT MAX(id) FROM faculties));
-  SELECT setval(pg_get_serial_sequence('careers','id'), (SELECT MAX(id) FROM careers));
-  SELECT setval(pg_get_serial_sequence('students','id'), (SELECT MAX(id) FROM students));
-  SELECT setval(pg_get_serial_sequence('sections','id'), (SELECT MAX(id) FROM sections));
-  COMMIT;
 `;
 
 // Ejecutar la migración como proceso puntual, no como parte de cada petición HTTP.
@@ -105,7 +107,7 @@ try {
   log("INFO", "migration_completed");
 } catch (error) {
   // Registrar el fallo de la tarea administrativa.
-  log("ERROR", "migration_failed", { code: "MIGRATION_FAILED" });
+  log("ERROR", "migration_failed", { message: error.message });
   // Propagar un código de salida distinto de cero al shell/CI.
   process.exitCode = 1;
 } finally {

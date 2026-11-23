@@ -1,128 +1,192 @@
-# SGU-UNJBG - Taller Semana 14 resuelto
+# Sistema de Gestión Universitaria UNJBG – Módulo de Matrícula
 
-Proyecto base conservado y ampliado según el PDF del taller: dashboard, API REST, PostgreSQL, auditoría de los 12 factores, cinco mejoras y evidencias verificadas.
+Proyecto didáctico de la Semana 14 de Ingeniería de Software I. Implementa un servicio REST mínimo para aplicar 12-Factor App, manejo de errores, logs, Docker, Compose y Container Registry.
 
-**Empieza por `INFORME_TALLER_RESUELTO.pdf`.** La resolución editable está en `docs/TALLER_RESUELTO.md`. El estado real de las comprobaciones está en `evidencias/LEEME.md`. Datos ficticios; no es un sistema institucional de producción.
+## 1. Requisitos
 
-## Inicio rápido en Windows
+- Docker Engine o Docker Desktop con Docker Compose.
+- Git.
+- Acceso a un Container Registry para el ejercicio de publicación.
+- Node.js 24 solo si se desea ejecutar pruebas fuera de Docker.
 
-1. Instala e inicia Docker Desktop con contenedores Linux. Abre PowerShell dentro de esta carpeta (la que contiene `compose.yaml`).
-2. Ejecuta:
+## 2. Preparación local
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\iniciar.ps1
-```
+1. Copiar `.env.example` a `.env`.
+2. Cambiar `DB_PASSWORD` por una contraseña local de laboratorio.
+3. No subir `.env` al repositorio.
+4. Construir y levantar el entorno:
 
-Este comando solo aplica la política a ese proceso. El script crea `.env` si falta, genera una contraseña local, construye, levanta los servicios, migra y abre el navegador. No sobrescribe un `.env` existente. No requiere Node local.
-
-**Alternativa manual:**
-
-```powershell
-docker --version
-docker compose version
-docker info
-Copy-Item .env.example .env
-notepad .env
-# Cambia DB_PASSWORD por una contraseña de laboratorio.
-docker compose config --quiet
+```bash
 docker compose up --build -d
-docker compose exec -T api npm run migrate
+```
+
+5. Ejecutar la migración:
+
+```bash
+docker compose exec api npm run migrate
+```
+
+6. Consultar readiness:
+
+```bash
+curl http://localhost:8080/health/ready
+
+# Abrir la interfaz visual
+# http://localhost:8080
+```
+
+## 3. Interfaz visual en el navegador
+
+Con los contenedores iniciados y la migración ejecutada, abrir:
+
+- En el mismo equipo: `http://localhost:8080`
+- Desde otro equipo de la misma red: `http://IP_DEL_SERVIDOR:8080`
+
+La IP debe ser la dirección LAN del equipo donde corre Docker. El firewall debe permitir TCP/8080 y Docker debe publicar el puerto (Compose ya configura `8080:8080`). No usar `localhost` desde otro equipo: allí `localhost` apunta al propio equipo cliente. Si ya ejecutaste una versión anterior, vuelve a correr `docker compose exec api npm run migrate` para incorporar las tablas académicas y catálogos demostrativos.
+
+El dashboard presenta navegación lateral, cuatro KPI (estudiantes activos, matrículas registradas, vacantes disponibles y secciones activas), resumen por facultad y escuela profesional, formulario de matrícula, inspección de JSON request/response y tabla de trazabilidad. Los indicadores se obtienen mediante `GET /api/v1/dashboard`; la interfaz consume la API REST y no accede directamente a PostgreSQL. Los nombres y cantidades son datos ficticios de laboratorio.
+
+Rutas visuales/API:
+
+- `GET /` — interfaz HTML.
+- `GET /health/ready` — disponibilidad de API y PostgreSQL.
+- `GET /api/v1/catalog` — estudiantes y secciones activas.
+- `GET /api/v1/dashboard` — KPI y resumen por facultad/escuela profesional.
+- `GET /api/v1/enrollments` — últimas matrículas registradas.
+- `POST /api/v1/enrollments` — crear matrícula.
+
+## 4. Crear una matrícula
+
+```bash
+curl -X POST http://localhost:8080/api/v1/enrollments \
+  -H "Content-Type: application/json" \
+  -d '{"studentId":1,"sectionId":1}'
+```
+
+La primera matrícula debe responder HTTP 201. Una segunda matrícula del mismo estudiante y sección debe responder HTTP 409.
+
+## 5. Operación y diagnóstico
+
+```bash
 docker compose ps
-Start-Process 'http://localhost:8080'
+docker compose logs -f api
+docker compose logs db
+docker compose down
 ```
 
-Antes de migrar, readiness devuelve 503: el proceso vive, pero aún no existen las tablas. Después de migrar, espera un ciclo de healthcheck (10 segundos). `api` y `db` deben estar saludables. Si 8080 está ocupado cambia `HOST_PORT=8081` en `.env`, recrea con `docker compose up -d` y usa http://localhost:8081.
+`docker compose down` conserva el volumen de PostgreSQL. Para borrar también los datos de laboratorio, ejecutar `docker compose down -v`.
 
-## Probar endpoints y matrícula
+## 6. Pruebas
 
-```powershell
-curl.exe -i http://localhost:8080/health/live
-curl.exe -i http://localhost:8080/health/ready
-curl.exe -i http://localhost:8080/api/v1/catalog
-curl.exe -i http://localhost:8080/api/v1/dashboard
-curl.exe -i http://localhost:8080/api/v1/enrollments
-'{"studentId":1,"sectionId":1}' | Set-Content -Encoding ascii solicitud.json
-curl.exe -i -X POST http://localhost:8080/api/v1/enrollments -H 'Content-Type: application/json' --data-binary '@solicitud.json'
-# Repite el mismo POST para observar 409.
-```
+Con Node.js 24 instalado localmente:
 
-Se usa un archivo JSON para evitar diferencias de comillas entre Windows PowerShell y PowerShell 7. La primera petición es 201 solo si esa pareja no está matriculada y hay vacantes. ID 0 produce 422; recurso inexistente 404; JSON roto 400; cuerpo mayor de 32 KB 413; error inesperado 500. Respuestas y logs comparten `requestId`/`request_id`.
-
-## Pruebas automatizadas
-
-Con Node 24 instalado:
-
-```powershell
-npm ci
+```bash
+npm install
 npm test
 ```
 
-22 comprobaciones aprobadas (incluye un test contenedor con 8 subpruebas). La construcción Docker también las ejecuta. Integración real y aislada en PostgreSQL 17:
+La etapa `build` del Dockerfile ejecuta las pruebas antes de generar la imagen final.
 
-```powershell
-docker compose -p sgu-pruebas -f compose.test.yaml up --build --abort-on-container-exit --exit-code-from tests
-docker compose -p sgu-pruebas -f compose.test.yaml down
+## 7. Publicación en registry
+
+Reemplazar `REGISTRY_HOST/ORGANIZACION` por el namespace real al que el equipo tiene acceso:
+
+```bash
+docker login REGISTRY_HOST
+docker build -t REGISTRY_HOST/ORGANIZACION/sgu-matricula-api:1.0.0 .
+docker push REGISTRY_HOST/ORGANIZACION/sgu-matricula-api:1.0.0
+docker image inspect REGISTRY_HOST/ORGANIZACION/sgu-matricula-api:1.0.0
 ```
 
-12 comprobaciones de integración (11 casos y su test contenedor), incluida concurrencia. El entorno de pruebas tiene base `sgu_test`, datos temporales y no utiliza el volumen de demostración. No ejecutes `npm run test:integration` contra una base con datos reales. La suite exige que el nombre termine en `_test`.
+Registrar en el informe la URL, tag y digest real. Nunca colocar credenciales en Dockerfile, compose.yaml, repositorio o argumentos de build.
 
-## Evidencias Docker y persistencia
+## 8. Alcance didáctico y limitaciones
 
-Sobre una pareja aún sin matricular (por ejemplo estudiante 2/sección 1):
+- Los estudiantes y la sección son datos ficticios de laboratorio.
+- La migración crea datos de demostración; no es un mecanismo de migraciones de producción.
+- La API es un MVP educativo, no un sistema institucional listo para producción.
+- Antes de producción se requieren autenticación, autorización, auditoría formal, protección contra abuso, migraciones versionadas, observabilidad completa, gestión de secretos y revisión de seguridad.
+- La lógica de matrícula usa una transacción y bloqueo de fila para proteger la disponibilidad de vacantes.
 
+## 9. Lockfile y reproducibilidad
+
+Para completar la práctica de dependencias reproducibles, ejecutar `npm install` con acceso al registro npm. Esto genera `package-lock.json`. Versionar ese archivo y cambiar las instrucciones `npm install` del Dockerfile por `npm ci` (en ambas etapas). Así la instalación queda fijada por el lockfile. El entorno de generación de este material no tuvo acceso al registro npm para resolver las dependencias transitivas y, por eso, el proyecto no incluye un lockfile inventado.
+
+## Guía de ejecución del taller
+
+Consulta `docs/TALLER_PRACTICO_SEMANA14.md` para comandos rápidos. La guía docente completa desarrolla actividades, explicación de código, resultados esperados, puntos de control, solución de problemas y rúbrica.
+
+
+## Administración académica ampliada
+
+Esta versión incorpora pgAdmin 4 (`http://localhost:5050`), CRUD paginado para periodos, facultades, escuelas, estudiantes y secciones, reportes agregados y exportación Excel (`.xlsx`). Consulta `docs/ADMINISTRACION_PGADMIN_CRUD_REPORTES.md`.
+
+**Seguridad:** prototipo académico sin autenticación/autorización en los módulos CRUD. No publicar en Internet ni cargar datos personales reales.
+
+
+## Mejora de CRUD y reportes PDF/Excel
+
+### CRUD mejorado
+Los módulos de periodos académicos, facultades, escuelas profesionales, estudiantes y secciones incorporan búsqueda, paginación, ordenamiento por campos permitidos, formularios de alta/edición, confirmación de eliminación y validaciones de longitudes/tipos. Las restricciones de integridad referencial de PostgreSQL se mantienen vigentes.
+
+### Visor PDF
+El dashboard incorpora un visor PDF integrado mediante un cuadro de diálogo con `iframe`. Permite previsualizar los reportes sin salir de la interfaz y descargar el mismo documento.
+
+### Reportes PDF
+- `GET /api/v1/reports/summary.pdf`: reporte ejecutivo general.
+- `GET /api/v1/reports/:resource.pdf`: reporte de una entidad.
+- Añadir `?download=1` para forzar descarga; por defecto se visualiza en el navegador.
+
+### Exportación Excel por entidad
+- `GET /api/v1/reports/:resource.xlsx`: libro XLSX individual.
+- `GET /api/v1/reports/export.xlsx`: libro consolidado, una hoja por entidad.
+
+Recursos de reporte: `academic_periods`, `faculties`, `careers`, `students`, `sections` y `enrollments`.
+
+### Actualizar contenedores
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\evidencias.ps1 -StudentId 2 -SectionId 1
+# Verificar la configuración de Docker Compose.
+docker compose config
+
+# Reconstruir la API con PDFKit y las mejoras de reportes.
+docker compose up --build -d
+
+# Verificar el estado de API, PostgreSQL y pgAdmin.
+docker compose ps
+
+# Revisar los registros de la API si fuera necesario.
+docker compose logs --tail 100 api
 ```
 
-El script registra HTTP 201/409/422, logs, estado y persistencia tras `down`/`up`. No elimina volúmenes. Si ya usaste esa pareja, elige otra del catálogo. Para otro puerto agrega `-BaseUrl http://localhost:8081`.
+No se requiere una migración nueva para los reportes: reutilizan las tablas existentes. Si la base de datos todavía no fue inicializada, ejecutar `docker compose exec api npm run migrate`.
+
+### Dependencias agregadas
+- `pdfkit`: generación de documentos PDF en el servidor.
+- `exceljs`: generación de libros Excel.
+
+---
+
+## Semana 15 — APIs dinámicas con OpenAPI (Design-First)
+
+Esta versión incorpora el contrato formal de la API y la guía de laboratorio:
+
+- `docs/openapi.yaml`: contrato OpenAPI 3.0.3 de las rutas existentes.
+- `docs/SEMANA15_API_OPENAPI_DESIGN_FIRST.md`: explicación de conceptos, relación contrato-código, validación, documentación, generación de stub, pruebas y actividad evaluada.
+
+### Validar y generar documentación del contrato
+
+Desde la raíz del proyecto:
 
 ```powershell
-docker compose logs --tail=100 api
-docker compose down
-docker compose up -d
+npx --yes @redocly/cli lint docs/openapi.yaml
+npx --yes @redocly/cli build-docs docs/openapi.yaml -o docs/api-reference.html
 ```
 
-`down` conserva `sgu_data`; **`down -v` borra los datos** y no es parte de la verificación normal. Cambiar DB_PASSWORD no cambia automáticamente la contraseña de un volumen ya inicializado.
+Abrir `docs/api-reference.html` para explorar las operaciones de la API.
 
-## Configuración fallida (B1)
+### Relación con el backend
 
-Guarda copia local del `.env`, elimina temporalmente la línea DB_PASSWORD y ejecuta `docker compose up -d --force-recreate api`; consulta `docker compose logs --tail=50 api`. Debe aparecer `Falta la variable obligatoria DB_PASSWORD.`. Restaura la línea y recrea otra vez. No publiques `.env`, ni captures `docker compose config` sin filtrar: puede mostrar la contraseña resuelta. Usa `config --quiet` para validar.
+El contrato documenta `src/app.js`, `src/enrollment-service.js`, `src/admin-routes.js` y `src/reports.js`. No reemplaza estos archivos. Si se experimenta con OpenAPI Generator, generar en `generated-server/` y nunca encima de `src/`.
 
-## Acceso desde otra PC
+**Importante:** el CRUD administrativo no tiene autenticación/autorización. El endpoint PUT actual realiza actualización parcial; la guía documenta esta diferencia y propone PATCH como mejora futura.
 
-Ejecuta `ipconfig`, identifica la IPv4 de la tarjeta LAN y abre `http://IPV4:8080` en otra PC de la misma red. Si Windows bloquea la conexión, permite TCP 8080 solo en perfil privado y subred local (PowerShell administrador):
-
-```powershell
-New-NetFirewallRule -DisplayName 'SGU laboratorio 8080' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080 -Profile Private -RemoteAddress LocalSubnet
-```
-
-Adapta el puerto si lo cambiaste. No abras el router a Internet. Al terminar puedes retirar la regla con `Remove-NetFirewallRule -DisplayName 'SGU laboratorio 8080'`.
-
-## Registry (no publicado)
-
-No se suministró cuenta ni namespace. No hay URL ni digest publicados. Con tu cuenta real, sustituye TU_USUARIO:
-
-```powershell
-docker login
-docker build -t TU_USUARIO/sgu-matricula-api:1.0.0 .
-docker push TU_USUARIO/sgu-matricula-api:1.0.0
-docker image inspect TU_USUARIO/sgu-matricula-api:1.0.0 --format '{{json .RepoDigests}}'
-```
-
-Registra la URL real del repositorio, tag y digest devuelto tras el push. No confundas el ID local de imagen con el digest publicado.
-
-## Archivos principales
-
-- `src/`, `public/`: aplicación y dashboard originales con mejoras del taller.
-- `test/`: configuración, contrato de errores y HTTP con dobles de prueba.
-- `integration/`: matrícula, errores y concurrencia con PostgreSQL real.
-- `Dockerfile`, `compose.yaml`, `compose.test.yaml`: construcción y orquestación.
-- `package-lock.json`: árbol real obtenido con npm; Docker usa `npm ci`.
-- `docs/12-factor-audit.md`: matriz de doce factores con estados justificados.
-- `docs/MEJORAS_PRIORIZADAS.md`: cinco mejoras, riesgos, responsables por rol y aceptación.
-- `docs/TALLER_RESUELTO.md`: actividades A1-C8, cierre y guion de exposición.
-- `evidencias/`: salidas reales de las pruebas y registro de limitaciones.
-
-## Estado verificado de esta entrega
-
-Node 24.22.1 y PostgreSQL 17.11 ejecutados localmente en el entorno de preparación: 22 comprobaciones unitarias/HTTP + 12 de integración aprobadas. Se comprobaron endpoints, migración, concurrencia y persistencia tras reiniciar procesos. **Docker no está instalado en ese entorno: el build, Compose, volumen Docker y LAN deben verificarse en tu Windows.** No se pudo ejecutar el navegador para tomar capturas; se incluye una lista precisa de las capturas pendientes. No publicado en registry. Los scripts PowerShell están preparados, pero no se ejecutaron en Windows durante esta entrega.

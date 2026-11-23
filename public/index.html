@@ -22,6 +22,9 @@
     <nav aria-label="Navegación principal">
       <span class="nav-caption">GENERAL</span><a class="nav-link active" href="#dashboard"><span>▦</span> Dashboard</a>
       <span class="nav-caption">GESTIÓN ACADÉMICA</span><a class="nav-link" href="#resumen"><span>▤</span> Resumen por escuela</a><a class="nav-link" href="#matricula"><span>＋</span> Registrar matrícula</a><a class="nav-link" href="#registros"><span>▥</span> Matrículas registradas</a>
+      <span class="nav-caption">ADMINISTRACIÓN</span>
+      <a class="nav-link" href="#adminSection"><span>▦</span> Catálogos y CRUD</a>
+      <a class="nav-link" href="#reportsSection"><span>▤</span> Reportes y Excel</a>
       <span class="nav-caption">PLATAFORMA</span><a class="nav-link" href="#arquitectura"><span>⌘</span> Arquitectura API</a>
     </nav>
     <div class="sidebar-footer"><span class="status-dot" id="sidebarDot"></span><span id="sidebarStatus">Conectando con API…</span></div>
@@ -44,6 +47,88 @@
 }</code></pre><div class="endpoint-line"><span>Request ID</span><code id="requestId">—</code></div></article>
     </section>
     <section class="content-card" id="registros"><div class="section-heading"><div><p class="section-kicker">TRAZABILIDAD</p><h2>Últimas matrículas registradas</h2><p>Información recuperada desde PostgreSQL mediante GET /api/v1/enrollments.</p></div><span class="record-count" id="recordCount">0 registros</span></div><div class="table-scroll"><table class="academic-table records-table"><thead><tr><th>ID</th><th>CÓDIGO UNIVERSITARIO</th><th>ESTUDIANTE</th><th>ASIGNATURA</th><th>PERIODO</th><th>FECHA DE REGISTRO</th></tr></thead><tbody id="enrollmentRows"><tr><td colspan="6" class="empty-cell">Todavía no hay matrículas registradas.</td></tr></tbody></table></div></section>
+
+    <section class="content-card admin-card" id="adminSection">
+      <div class="section-heading">
+        <div><p class="section-kicker">MANTENIMIENTO DE DATOS MAESTROS</p><h2>Administración de catálogos académicos</h2>
+          <p>Altas, consultas, modificaciones y bajas con búsqueda, paginación y validación de relaciones.</p></div>
+        <span class="record-count">CRUD · REST</span>
+      </div>
+      <div class="admin-toolbar">
+        <label for="adminResource">Entidad</label>
+        <select id="adminResource">
+          <option value="academic_periods">Periodos académicos</option>
+          <option value="faculties">Facultades</option>
+          <option value="careers">Escuelas profesionales</option>
+          <option value="students">Estudiantes</option>
+          <option value="sections">Secciones</option>
+        </select>
+        <input id="adminSearch" type="search" placeholder="Buscar por nombre, código o relación…">
+        <select id="adminPageSize" aria-label="Registros por página">
+          <option value="5">5 por página</option><option value="10" selected>10 por página</option><option value="25">25 por página</option><option value="50">50 por página</option>
+        </select>
+        <select id="adminSort" aria-label="Ordenar por"></select>
+        <select id="adminDirection" aria-label="Dirección de orden">
+          <option value="asc">Ascendente</option><option value="desc" selected>Descendente</option>
+        </select>
+        <button id="adminSearchButton" class="secondary-button" type="button">Buscar</button>
+        <button id="adminCreateButton" class="primary-button" type="button">＋ Nuevo registro</button>
+        <button id="adminPdfButton" class="secondary-button report-action" type="button">Ver PDF</button>
+        <a id="adminExcelButton" class="secondary-button report-action" href="/api/v1/reports/academic_periods.xlsx">Excel de esta tabla</a>
+      </div>
+      <div id="adminFormContainer" class="admin-form-container" hidden></div>
+      <div class="table-scroll">
+        <table class="academic-table admin-table">
+          <thead id="adminHead"><tr><th>Datos</th><th>Acciones</th></tr></thead>
+          <tbody id="adminBody"><tr><td colspan="2" class="empty-cell">Seleccione una entidad.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination-bar">
+        <span id="adminPageInfo">Página 1</span>
+        <div><button id="adminPrev" class="secondary-button" type="button">← Anterior</button><button id="adminNext" class="secondary-button" type="button">Siguiente →</button></div>
+      </div>
+      <p class="table-note">Las eliminaciones respetan las claves foráneas. El campo de matriculados en secciones es de solo lectura y se actualiza mediante el proceso de matrícula.</p>
+    </section>
+    <section class="content-card" id="reportsSection">
+      <div class="section-heading">
+        <div><p class="section-kicker">INTELIGENCIA ACADÉMICA</p><h2>Reportes y exportación</h2>
+          <p>Indicadores de catálogos, distribución por facultad y actividad por periodo.</p></div>
+        <div class="report-header-actions">
+          <a class="primary-button export-button" href="/api/v1/reports/export.xlsx">⇩ Excel consolidado</a>
+          <button id="summaryPdfButton" class="secondary-button" type="button">Ver reporte general PDF</button>
+        </div>
+      </div>
+      <div class="report-toolbar">
+        <label for="reportResource">Entidad del reporte</label>
+        <select id="reportResource">
+          <option value="academic_periods">Periodos académicos</option>
+          <option value="faculties">Facultades</option>
+          <option value="careers">Escuelas profesionales</option>
+          <option value="students">Estudiantes</option>
+          <option value="sections">Secciones</option>
+          <option value="enrollments">Matrículas</option>
+        </select>
+        <button id="reportPreviewButton" class="secondary-button" type="button">Vista previa PDF</button>
+        <a id="reportExcelButton" class="secondary-button" href="/api/v1/reports/academic_periods.xlsx">Exportar esta tabla a Excel</a>
+      </div>
+      <div id="reportTotals" class="report-kpis"><div class="empty-cell">Cargando reportes…</div></div>
+      <div class="report-grid">
+        <div><h3>Distribución por facultad</h3><div class="table-scroll"><table class="academic-table"><thead><tr><th>Facultad</th><th>Escuelas</th><th>Estudiantes</th></tr></thead><tbody id="reportFacultyRows"><tr><td colspan="3" class="empty-cell">Cargando…</td></tr></tbody></table></div></div>
+        <div><h3>Actividad por periodo</h3><div class="table-scroll"><table class="academic-table"><thead><tr><th>Periodo</th><th>Estado</th><th>Secciones</th><th>Matrículas</th></tr></thead><tbody id="reportPeriodRows"><tr><td colspan="4" class="empty-cell">Cargando…</td></tr></tbody></table></div></div>
+      </div>
+      <p class="table-note">Cada catálogo dispone de exportación Excel individual y vista previa PDF. El libro consolidado reúne todos los catálogos en hojas independientes.</p>
+    </section>
+    <dialog id="pdfViewerDialog" class="pdf-viewer-dialog" aria-labelledby="pdfViewerTitle">
+      <div class="pdf-viewer-header">
+        <div><p class="section-kicker">VISOR DOCUMENTAL</p><h2 id="pdfViewerTitle">Reporte PDF del SGU</h2></div>
+        <div class="pdf-viewer-actions">
+          <a id="pdfDownloadLink" class="secondary-button" href="#" download>Descargar PDF</a>
+          <button id="pdfViewerClose" class="secondary-button" type="button" aria-label="Cerrar visor">Cerrar ✕</button>
+        </div>
+      </div>
+      <iframe id="pdfViewerFrame" title="Vista previa del reporte PDF" src="about:blank"></iframe>
+    </dialog>
+
     <section class="content-card architecture-card" id="arquitectura"><div class="section-heading compact"><div><p class="section-kicker">ARQUITECTURA DE LA SOLUCIÓN</p><h2>Flujo de datos del módulo de matrícula</h2></div></div><div class="architecture-flow"><div class="architecture-node"><span>01</span><strong>Cliente web</strong><small>HTML · CSS · JavaScript</small></div><b>→</b><div class="architecture-node"><span>02</span><strong>API REST</strong><small>Node.js 24 · Express 5</small></div><b>→</b><div class="architecture-node"><span>03</span><strong>Reglas de negocio</strong><small>Validación · Transacción</small></div><b>→</b><div class="architecture-node"><span>04</span><strong>Base de datos</strong><small>PostgreSQL 17</small></div></div></section>
     <footer class="page-footer">Sistema de Gestión Universitaria · UNJBG · Proyecto académico de Ingeniería de Software I · Datos ficticios de laboratorio</footer>
   </main>

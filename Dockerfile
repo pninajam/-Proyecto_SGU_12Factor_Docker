@@ -4,8 +4,9 @@ FROM node:24-alpine AS build
 WORKDIR /app
 # Copiar los manifiestos antes del código para aprovechar la caché.
 COPY package*.json ./
-# Instalar el árbol reproducible del package-lock.json verificado.
-RUN npm ci --no-audit --no-fund
+# Instalar las dependencias exactas declaradas en package.json.
+# En el taller, generar package-lock.json y sustituir este comando por npm ci.
+RUN npm install --no-audit --no-fund
 # Copiar el código de la aplicación.
 COPY src ./src
 # Copiar las pruebas para que npm test pueda ejecutarlas.
@@ -22,7 +23,7 @@ ENV NODE_ENV=production
 # Copiar manifiestos para instalar solo dependencias de runtime.
 COPY package*.json ./
 # Instalar únicamente dependencias de producción.
-RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
+RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
 # Copiar el código fuente desde la etapa ya probada.
 COPY --from=build /app/src ./src
 # Copiar los archivos HTML, CSS y JavaScript que consume el navegador.

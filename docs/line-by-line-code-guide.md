@@ -1,5 +1,3 @@
-> REFERENCIA DEL ZIP ORIGINAL. Algunos fragmentos corresponden a la versión inicial. Para la entrega final prevalecen el código actual, README y TALLER_RESUELTO.md (npm ci, readiness con esquema y logging seguro).
-
 # Guía de lectura línea por línea del código
 
 El código ejecutable contiene comentarios junto a las instrucciones relevantes. Este documento complementa los archivos que no admiten comentarios nativos (por ejemplo, JSON) y explica el propósito de cada bloque.

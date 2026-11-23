@@ -10,45 +10,35 @@ import { createEnrollment } from "./enrollment-service.js";
 // Importar consulta de salud de PostgreSQL.
 import { checkDatabase, pool } from "./db.js";
 // Importar normalización de errores.
-import { AppError, publicError } from "./errors.js";
+import { publicError } from "./errors.js";
 // Importar logger estructurado.
 import { log } from "./logger.js";
+// Rutas de administración de catálogos y reportes exportables.
+import { adminRouter } from "./admin-routes.js";
+import { reportsRouter } from "./reports.js";
 
 // Crear la instancia principal de Express.
 export const app = express();
 
 // Habilitar lectura de cuerpos JSON con un límite pequeño.
-
+app.use(express.json({ limit: "32kb" }));
 
 // Resolver la carpeta public sin depender del directorio desde donde se inicia Node.
 const currentFile = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFile);
 
 // Publicar HTML, CSS y JavaScript del navegador desde el mismo servicio.
-
+app.use(express.static(path.resolve(currentDirectory, "../public")));
 
 // Asignar o aceptar un identificador de correlación por petición.
 app.use((req, res, next) => {
   // Reutilizar el identificador recibido o generar uno nuevo.
-  const suppliedId = req.header("x-request-id");
-  req.requestId = typeof suppliedId === "string" && /^[A-Za-z0-9._-]{1,100}$/.test(suppliedId)
-    ? suppliedId : randomUUID();
-  const started = performance.now();
-  res.on("finish", () => log("INFO", "request_completed", {
-    request_id: req.requestId,
-    method: req.method,
-    status: res.statusCode,
-    duration_ms: Math.round(performance.now() - started)
-  }));
+  req.requestId = req.header("x-request-id") || randomUUID();
   // Devolver el identificador para correlación desde el cliente.
   res.setHeader("x-request-id", req.requestId);
   // Continuar con el siguiente middleware o ruta.
   next();
 });
-
-// El requestId debe existir incluso si falla el parser JSON.
-app.use(express.json({ limit: "32kb" }));
-app.use(express.static(path.resolve(currentDirectory, "../public")));
 
 // Exponer un endpoint de liveness que confirma que el proceso está activo.
 app.get("/health/live", (req, res) => {
@@ -59,10 +49,13 @@ app.get("/health/live", (req, res) => {
 // Exponer un endpoint de readiness que comprueba la base de datos.
 app.get("/health/ready", async (req, res, next) => {
   try {
+    // Comprobar que PostgreSQL responde.
     await checkDatabase();
+    // Informar que el servicio puede recibir tráfico.
     res.status(200).json({ status: "ready", requestId: req.requestId });
-  } catch {
-    next(new AppError("La base de datos o el esquema no están disponibles.", "NOT_READY", 503));
+  } catch (error) {
+    // Delegar el fallo al middleware centralizado.
+    next(error);
   }
 });
 
@@ -183,6 +176,10 @@ app.post("/api/v1/enrollments", async (req, res, next) => {
   }
 });
 
+// CRUD administrativo y reportes académicos.
+app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/reports", reportsRouter);
+
 // Responder con 404 para rutas no definidas.
 app.use((req, res) => {
   // Crear una respuesta de ruta inexistente sin revelar detalles internos.
@@ -198,17 +195,12 @@ app.use((req, res) => {
 // Centralizar la traducción de errores a respuestas HTTP seguras.
 app.use((error, req, res, next) => {
   // Obtener el contrato público del error.
-  const normalized = error.type === "entity.parse.failed"
-    ? new AppError("El cuerpo debe ser JSON válido.", "INVALID_JSON", 400)
-    : error.type === "entity.too.large"
-      ? new AppError("El cuerpo supera el límite de 32 KB.", "PAYLOAD_TOO_LARGE", 413)
-      : error;
-  const safe = publicError(normalized);
+  const safe = publicError(error);
   // Registrar el error técnico en stdout con identificador de correlación.
   log("ERROR", "request_failed", {
     request_id: req.requestId,
     error_code: safe.code,
-    status: safe.status
+    internal_message: error.message
   });
   // Enviar únicamente el mensaje público y el código controlado.
   res.status(safe.status).json({

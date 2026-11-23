@@ -22,10 +22,7 @@ server.listen(config.port, "0.0.0.0", () => {
 });
 
 // Definir una función de cierre ordenado ante señales del sistema operativo.
-let shuttingDown = false;
 async function shutdown(signal) {
-  if (shuttingDown) return;
-  shuttingDown = true;
   // Registrar qué señal inició el apagado.
   log("INFO", "shutdown_started", { signal });
   // Dejar de aceptar nuevas conexiones HTTP.
@@ -39,7 +36,7 @@ async function shutdown(signal) {
       process.exit(0);
     } catch (error) {
       // Registrar un error resumido de cierre.
-      log("ERROR", "shutdown_failed", { code: "SHUTDOWN_FAILED" });
+      log("ERROR", "shutdown_failed", { message: error.message });
       // Finalizar con código de error.
       process.exit(1);
     }

@@ -1,26 +1,28 @@
-# A3. Matriz de auditoría 12-Factor
+# Auditoría 12-Factor del proyecto SGU
 
-Corte: 16/11/2026. “Cumple” se limita al alcance didáctico y a la evidencia indicada. La ejecución local no demuestra un despliegue Docker o productivo. El ZIP no trae historial Git, URL remota ni commit verificables.
+| Factor | Evidencia en el proyecto | Cómo demostrarlo |
+|---|---|---|
+| I. Codebase | Repositorio único del servicio, commits y tags | `git log --oneline --decorate` |
+| II. Dependencies | `package.json` y `package-lock.json` | `npm ci` |
+| III. Config | `src/config.js`, `.env.example`, `env_file` de Compose | Cambiar `.env` sin reconstruir la imagen |
+| IV. Backing services | PostgreSQL como servicio conectado por `DB_HOST=db` | `docker compose ps`; readiness |
+| V. Build/release/run | Dockerfile build y runtime; migración como proceso puntual | `docker build`; `npm run migrate`; `docker compose up` |
+| VI. Processes | API sin almacenar estado crítico en memoria local | Reiniciar API y verificar datos en PostgreSQL |
+| VII. Port binding | `PORT`, `0.0.0.0`, `ports` | `curl localhost:8080/health/live` |
+| VIII. Concurrency | Servicio HTTP sin sesión local; pool de conexiones | Escalar réplicas en una práctica ampliada |
+| IX. Disposability | `SIGTERM`, cierre HTTP y `pool.end()` | `docker stop` y observar logs |
+| X. Dev/prod parity | Mismo Dockerfile/imagen, configuración inyectada | Ejecutar misma imagen con distintos `.env` |
+| XI. Logs | `src/logger.js` escribe JSON a stdout | `docker compose logs api` |
+| XII. Admin processes | `src/scripts/migrate.js` es tarea puntual | `docker compose exec api npm run migrate` |
 
-| Factor | Estado | Evidencia concreta | Comando / prueba y justificación |
-|---|---|---|---|
-| 1. Codebase | Parcial | Código en una carpeta; sin repositorio/historial adjunto | En el repositorio del equipo: `git remote -v` y `git rev-parse HEAD`. URL y commit pendientes; no se inventaron. |
-| 2. Dependencies | Cumple | `package.json`, `package-lock.json`, Dockerfile con `npm ci` | `npm ci` ejecutado; `evidencias/dependencias.txt`. Árbol real resuelto, no lockfile manual. |
-| 3. Config | Cumple | `src/config.js`, `.env.example`, `.gitignore`, `.dockerignore` | `test/config.test.js`: contraseña ausente, puertos inválidos y timeout negativo rechazados; secretos externos. |
-| 4. Backing services | Cumple | `src/db.js`, `DB_HOST`, servicio `db` | Integración real con PostgreSQL 17.11; `evidencias/http-postgresql-real.json`. Conexión por entorno, no fija. |
-| 5. Build, release, run | Parcial | Dockerfile build/runtime; tag 1.0.0; migración separada | Etapas definidas y dependencias probadas. Build Docker y release con digest pendientes por falta de motor/registry. |
-| 6. Processes | Cumple | Estado persistido en PostgreSQL, no en memoria de la API | Reinicio real Node + PostgreSQL conserva la matrícula: `persistence.pass=true` en evidencia HTTP. Prueba del volumen Docker pendiente. |
-| 7. Port binding | Cumple | `src/server.js`: `0.0.0.0`, `PORT`; Compose publica `HOST_PORT` | HTTP real probado en puerto 8080. Acceso LAN no probado. |
-| 8. Concurrency | Parcial | API sin sesión local; bloqueo de sección y pool de 10 conexiones | Integración prueba solicitudes simultáneas y evita sobrecupo. No equivale a escalado horizontal: faltan proxy, réplicas y prueba de carga. El puerto fijo impide `--scale api=2` tal cual. |
-| 9. Disposability | Cumple | SIGTERM/SIGINT, límite de 10 s, cierre HTTP/pool | `evidencias/api-real.jsonl`: `shutdown_started` y `shutdown_completed`; reinicio local exitoso. |
-| 10. Dev/prod parity | Parcial | Node 24 y PostgreSQL 17 declarados en Docker y pruebas | Mismas versiones principales y configuración externa. No hay entorno productivo ni digest inmutable; los tags base pueden cambiar. |
-| 11. Logs | Cumple | `src/logger.js`, evento `request_completed` y errores seguros | JSON a stdout, nivel y `request_id`; HTTP prueba ausencia de secretos. `evidencias/api-real.jsonl`. |
-| 12. Admin processes | Cumple | `src/scripts/migrate.js`, `npm run migrate` | Migración ejecutada aparte del servidor y repetida sin borrar matrículas; `evidencias/migracion-repetida.txt`. |
+## Brechas deliberadas para discusión
 
-## Lectura del resultado
+- La autenticación y autorización no están implementadas: deben ser una mejora posterior.
+- La migración es demostrativa y no sustituye una herramienta de migraciones versionadas.
+- El ejemplo no implementa CI/CD ni escaneo/SBOM; se proponen como extensión.
+- Para producción deben configurarse límites de recursos, políticas de red, backups, retención de logs, gestión de secretos y controles de acceso.
 
-Ocho factores cumplen en el alcance demostrado y cuatro son parciales (1, 5, 8 y 10). Ninguno se marca “No aplica”: todos son pertinentes. No se afirma despliegue Cloud completo. “Cloud-Ready” significa que la aplicación facilita su configuración, ejecución, observación y operación en contenedores; todavía necesita controles y validaciones para producción.
 
-## Mejora respecto de la matriz original
+## Interfaz web y separación de responsabilidades
 
-La matriz original solo enumeraba evidencias posibles y citaba un lockfile inexistente. Ahora distingue lo implementado, lo realmente ejecutado y las demostraciones pendientes. Se incorpora el lockfile obtenido con npm y los resultados reproducibles del taller.
+La interfaz HTML/CSS/JavaScript se publica como recurso estático desde Express. El navegador solo consume endpoints HTTP y no conoce credenciales ni dirección interna de PostgreSQL. Al usar rutas relativas (`/api/...`), la misma imagen puede atenderse por `localhost`, IP LAN o un nombre DNS sin recompilar el frontend. El puerto externo se configura mediante el mapeo `8080:8080` de Compose.
